@@ -2,19 +2,23 @@ import random
 
 import logging
 import requests
+import hashlib
+import configparser
 
 from typing import Any, Dict, Optional
 
 XKCD_TEMPLATE_URL = 'https://xkcd.com/%s/info.0.json'
 LATEST_XKCD_URL = 'https://xkcd.com/info.0.json'
 
-class XkcdHandler:
+class BigblueButtonHandler:
     '''
     This plugin provides several commands that can be used for fetch a comic
     strip from https://xkcd.com. The bot looks for messages starting with
     "@mention-bot" and responds with a message with the comic based on provided
     commands.
     '''
+
+# https://webinar.az-it.net/bigbluebutton/api/create?allowStartStopRecording=true&attendeePW=ap&autoStartRecording=false&meetingID=random-6361370&moderatorPW=mp&name=random-6361370&record=false&voiceBridge=72181&welcome=%3Cbr%3EWelcome+to+%3Cb%3E%25%25CONFNAME%25%25%3C%2Fb%3E%21&checksum=5119ed31bc4f2b02372fab7e2c44fcebbbf4e117
 
     META = {
         'name': 'XKCD',
@@ -49,6 +53,10 @@ class XkcdNotFoundError(Exception):
 
 class XkcdServerError(Exception):
     pass
+def get_bbb_server() -> configparser:
+    config = configparser.ConfigParser()   
+    config.read('config.ini')
+    return config
 
 def get_xkcd_bot_response(message: Dict[str, str], quoted_name: str) -> str:
     original_content = message['content'].strip()
@@ -64,12 +72,8 @@ def get_xkcd_bot_response(message: Dict[str, str], quoted_name: str) -> str:
     try:
         if command == 'help':
             return commands_help % ('xkcd bot supports these commands:')
-        elif command == 'latest':
-            fetched = fetch_xkcd_query(XkcdBotCommand.LATEST)
-        elif command == 'random':
-            fetched = fetch_xkcd_query(XkcdBotCommand.RANDOM)
-        elif command.isdigit():
-            fetched = fetch_xkcd_query(XkcdBotCommand.COMIC_ID, command)
+        elif command == 'create':
+            fetched = ctreate_bbb_room(XkcdBotCommand.LATEST)
         else:
             return commands_help % ("xkcd bot only supports these commands, not `%s`:" % (command,))
     except (requests.exceptions.ConnectionError, XkcdServerError):
